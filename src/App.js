@@ -1,5 +1,5 @@
 /**
- * App.js  (commit 3)
+ * App.js  (commit 4)
  *
  * Wires Graph + State + Canvas + Storage + Extractor + Exporter + Resolver
  * into the interactive offline demo.
@@ -10,6 +10,8 @@
  *   - Export: downloads a Markdown mastery path with layer breakdown.
  *   - Resolve modal: when a cycle is detected, user picks an edge on the
  *     cycle to drop; incremental re-layering restores consistency.
+ *   - Polish: persistent theme toggle, keyboard shortcuts, empty-state
+ *     surface, and single-file packaged build support.
  */
 (function () {
   'use strict';
@@ -34,6 +36,7 @@
     ['Graph Algorithms', 'Topological Sort'],
     ['Data Structures',  'Topological Sort'],
   ];
+  const THEME_KEY = 'chainforge:theme:v1';
 
   function seedDemo() {
     const g = new Graph();
@@ -70,6 +73,7 @@
       renderStats();
       renderOrder();
       renderCycle();
+      renderEmptyState();
     }
 
     function renderStats() {
@@ -119,6 +123,11 @@
       }
     }
 
+    function renderEmptyState() {
+      const el = document.getElementById('empty-state');
+      el.classList.toggle('hidden', state.graph.size() !== 0);
+    }
+
     let toastTimer = null;
     function showToast(msg) {
       const t = document.getElementById('toast');
@@ -130,9 +139,9 @@
 
     /* ------------------------- sidebar: quick add ----------------------- */
 
+    const newConceptInput = document.getElementById('new-concept');
     document.getElementById('add-concept').addEventListener('click', () => {
-      const input = document.getElementById('new-concept');
-      const name = (input.value || '').trim();
+      const name = (newConceptInput.value || '').trim();
       if (!name) return;
       const id = idFor(name);
       if (state.graph.hasNode(id)) {
@@ -140,18 +149,50 @@
         return;
       }
       state.addNode(id, name);
-      input.value = '';
+      newConceptInput.value = '';
       refresh();
       storage.save(state.graph);
     });
-    document.getElementById('new-concept').addEventListener('keydown', (e) => {
+    newConceptInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') document.getElementById('add-concept').click();
     });
 
     /* --------------------------- toolbar actions ------------------------ */
 
+    const themeToggle = document.getElementById('theme-toggle');
+    const shortcutsModal = document.getElementById('shortcuts-modal');
+    const shortcutsClose = document.getElementById('shortcuts-close');
+
+    function readTheme() {
+      try { return localStorage.getItem(THEME_KEY) || 'dark'; } catch (_) { return 'dark'; }
+    }
+    function writeTheme(theme) {
+      try { localStorage.setItem(THEME_KEY, theme); } catch (_) {}
+    }
+    function applyTheme(theme) {
+      const selected = theme === 'light' ? 'light' : 'dark';
+      document.body.dataset.theme = selected;
+      themeToggle.textContent = selected === 'light' ? 'Dark' : 'Light';
+      themeToggle.setAttribute('aria-pressed', selected === 'light' ? 'true' : 'false');
+      writeTheme(selected);
+    }
+    function toggleTheme() {
+      applyTheme(document.body.dataset.theme === 'light' ? 'dark' : 'light');
+      showToast(`${document.body.dataset.theme === 'light' ? 'Light' : 'Dark'} theme enabled.`);
+    }
+    function openShortcutsModal() { shortcutsModal.classList.remove('hidden'); }
+    function closeShortcutsModal() { shortcutsModal.classList.add('hidden'); }
+
+    applyTheme(readTheme());
+
     document.getElementById('import-btn').addEventListener('click', openImportModal);
     document.getElementById('export-btn').addEventListener('click', exportMarkdown);
+    themeToggle.addEventListener('click', toggleTheme);
+    document.getElementById('shortcuts-btn').addEventListener('click', openShortcutsModal);
+    shortcutsClose.addEventListener('click', closeShortcutsModal);
+    shortcutsModal.addEventListener('click', (e) => {
+      if (e.target === shortcutsModal) closeShortcutsModal();
+    });
     document.getElementById('reset-demo').addEventListener('click', () => {
       if (!confirm('Replace the current graph with the demo curriculum?')) return;
       state.graph = seedDemo();
@@ -372,6 +413,44 @@
       resolveList.appendChild(ul);
       resolveModal.classList.remove('hidden');
     }
+
+    /* -------------------------- keyboard polish ------------------------- */
+
+    function isTypingTarget(target) {
+      const tag = (target && target.tagName) || '';
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    }
+
+    function closeAllModals() {
+      closeImportModal();
+      resolveModal.classList.add('hidden');
+      closeShortcutsModal();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeAllModals();
+        return;
+      }
+      if (isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+      const key = e.key.toLowerCase();
+      if (key === 'i') {
+        e.preventDefault();
+        openImportModal();
+      } else if (key === 'e') {
+        e.preventDefault();
+        exportMarkdown();
+      } else if (key === 'n') {
+        e.preventDefault();
+        newConceptInput.focus();
+      } else if (key === 't') {
+        e.preventDefault();
+        toggleTheme();
+      } else if (e.key === '?') {
+        e.preventDefault();
+        openShortcutsModal();
+      }
+    });
 
     /* --------------------------- tiny helpers --------------------------- */
 

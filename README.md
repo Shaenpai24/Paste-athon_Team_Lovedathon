@@ -22,7 +22,7 @@ When you're stuck in a course, the real problem is usually not that one topic is
 | 1 | **Foundation** ✓ | Graph data structure, Kahn's algorithm with BFS layering, cycle detection, browser-based test suite, minimal demo UI |
 | 2 | **Interactive canvas + incremental updates** ✓ | SVG canvas, drag-to-add edges, partial BFS re-layering on every edit (`O(V'+E')`), node/edge removal with descendant recomputation, cycle rejection showing the closing path, localStorage persistence |
 | 3 | **Document ingestion + concept extraction** ✓ | Paste notes / upload .txt / .md, offline concept extractor, auto-edge suggestion, mastery-path export, contradiction resolver |
-| 4 | Polish | Theming, keyboard shortcuts, empty states, export to Markdown study plan, packaged single-file build |
+| 4 | **Polish** ✓ | Theming, keyboard shortcuts, empty states, export to Markdown study plan, packaged single-file build |
 
 ## Complexity guarantees
 
@@ -50,11 +50,22 @@ start index.html          # Windows
 
 To run the test suite, open `tests/test.html` in the same way — all tests execute in the browser and print pass/fail to the page.
 
+To regenerate the packaged one-file app:
+
+```
+node scripts/build-single-file.js
+open dist/chainforge.html
+```
+
 ## Project layout
 
 ```
 ChainForge/
 ├── index.html            # offline interactive shell
+├── dist/
+│   └── chainforge.html   # packaged single-file offline build
+├── scripts/
+│   └── build-single-file.js
 ├── src/
 │   ├── Graph.js          # adjacency-list DAG with reverse-edge tracking
 │   ├── Kahn.js           # O(V+E) topological sort + BFS layering
@@ -67,9 +78,9 @@ ChainForge/
 │   └── App.js            # demo wiring
 ├── tests/
 │   ├── test.html         # browser test runner
-│   └── tests.js          # 38 cases: LC210 + layering + cycles + incremental
+│   └── tests.js          # 39 cases: LC210 + layering + cycles + incremental
 │                         #           + partiality proofs + storage + ingestion
-│                         #           + export + resolver
+│                         #           + export + resolver + packaged build
 ├── styles/
 │   └── main.css
 └── README.md

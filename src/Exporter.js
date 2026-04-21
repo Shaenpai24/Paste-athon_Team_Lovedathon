@@ -1,10 +1,10 @@
 /**
- * Exporter.js  (commit 3)
+ * Exporter.js  (commit 4)
  * -----------------------------------------------------------------------------
  * Serialises the current State into a human-readable Markdown study plan:
- * a sequenced "Study order" list plus a "Layer breakdown" showing which
- * concepts can be studied in parallel. When the DAG carries a cycle the
- * export flags it as a contradiction section.
+ * a sequenced "Study order" list, a checkable "Study checklist", and a
+ * "Layer breakdown" showing which concepts can be studied in parallel. When
+ * the DAG carries a cycle the export flags it as a contradiction section.
  *
  * A companion `download(filename, content)` helper spits the string out to
  * the user's Downloads folder using a Blob URL — still fully offline.
@@ -35,9 +35,14 @@
     const lines = [];
     lines.push('# ' + title);
     lines.push('');
+    const generatedAt = opts.generatedAt || new Date();
+    if (generatedAt && typeof generatedAt.toISOString === 'function') {
+      lines.push('_Generated: ' + generatedAt.toISOString().slice(0, 10) + '_');
+      lines.push('');
+    }
     const status = cycleIds.length
-      ? `**${graph.size()} concepts** · **${graph.edgeCount()} prerequisites** · ⚠ contradiction detected`
-      : `**${graph.size()} concepts** across **${maxLayer + 1}** BFS layers · consistent DAG`;
+      ? `**${graph.size()} concepts** - **${graph.edgeCount()} prerequisites** - contradiction detected`
+      : `**${graph.size()} concepts** across **${maxLayer + 1}** BFS layers - consistent DAG`;
     lines.push(status);
     lines.push('');
 
@@ -48,6 +53,12 @@
       for (const [id, layer] of finite) {
         lines.push(`${i}. \`L${layer}\` ${labelOf(id)}`);
         i++;
+      }
+      lines.push('');
+      lines.push('## Study checklist');
+      lines.push('');
+      for (const [id, layer] of finite) {
+        lines.push(`- [ ] \`L${layer}\` ${labelOf(id)}`);
       }
       lines.push('');
       lines.push('## Layer breakdown');
@@ -64,6 +75,18 @@
             ? ` _(after: ${preds.join(', ')})_`
             : ' _(no prerequisites)_';
           lines.push(`- **${labelOf(id)}**${predLabel}`);
+        }
+        lines.push('');
+      }
+      if (graph.edgeCount()) {
+        lines.push('## Prerequisite links');
+        lines.push('');
+        const links = [...graph.edges()].sort((a, b) =>
+          labelOf(a[1]).localeCompare(labelOf(b[1])) ||
+          labelOf(a[0]).localeCompare(labelOf(b[0]))
+        );
+        for (const [u, v] of links) {
+          lines.push(`- ${labelOf(u)} -> ${labelOf(v)}`);
         }
         lines.push('');
       }

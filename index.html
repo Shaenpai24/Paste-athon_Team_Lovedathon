@@ -18,6 +18,8 @@
     <div class="actions">
       <button id="import-btn" class="btn primary">Import notes</button>
       <button id="export-btn" class="btn">Export</button>
+      <button id="theme-toggle" class="btn" aria-pressed="false">Light</button>
+      <button id="shortcuts-btn" class="btn" aria-label="Keyboard shortcuts">?</button>
       <button id="reset-demo" class="btn">Demo</button>
       <button id="clear-all" class="btn">Clear</button>
     </div>
@@ -46,6 +48,10 @@
     </aside>
 
     <section class="canvas-wrap">
+      <div id="empty-state" class="empty-state hidden">
+        <h2>Start with one concept</h2>
+        <p>Import notes, double-click the canvas, or type a concept on the left.</p>
+      </div>
       <svg id="canvas" class="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
     </section>
   </main>
@@ -97,11 +103,29 @@
     </div>
   </div>
 
+  <!-- Shortcuts modal -->
+  <div id="shortcuts-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+    <div class="modal-body compact">
+      <div class="modal-head">
+        <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+        <button id="shortcuts-close" class="icon-btn" aria-label="Close">×</button>
+      </div>
+      <dl class="shortcut-list">
+        <div><dt>I</dt><dd>Import notes</dd></div>
+        <div><dt>E</dt><dd>Export Markdown</dd></div>
+        <div><dt>N</dt><dd>Focus concept input</dd></div>
+        <div><dt>T</dt><dd>Switch theme</dd></div>
+        <div><dt>?</dt><dd>Show shortcuts</dd></div>
+        <div><dt>Esc</dt><dd>Close modal</dd></div>
+      </dl>
+    </div>
+  </div>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <footer class="foot">
-    <span>commit 3 · offline · ingestion + export + contradiction resolver</span>
-    <span>Tests: <a href="tests/test.html">tests/test.html</a></span>
+    <span>commit 4 · polished · themed · keyboard-ready · packaged</span>
+    <span><a href="tests/test.html">Tests</a> · <a href="dist/chainforge.html">Single-file build</a></span>
   </footer>
 
   <script src="src/Graph.js"></script>

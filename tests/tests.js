@@ -24,6 +24,9 @@
  *   - Markdown export for healthy DAGs and contradictory graphs
  *   - Concrete cycle recovery for the contradiction resolver
  *
+ * Commit 4 coverage:
+ *   - Polished Markdown exports with checklists and prerequisite links
+ *
  * All assertions run on page load and render to #results.
  */
 (function () {
@@ -426,6 +429,20 @@
     assert(md.includes('2. `L1` Proofs'));
     assert(md.includes('### Layer 1'));
     assert(md.includes('**Proofs** _(after: Logic)_'));
+  });
+
+  test('Exporter: polished Markdown includes checklist and link appendix', () => {
+    const g = new Graph();
+    g.addNode('logic', 'Logic');
+    g.addNode('proofs', 'Proofs');
+    g.addEdge('logic', 'proofs');
+    const s = new State(g); s.recomputeAll();
+    const md = Exporter.toMarkdown(s, { generatedAt: new Date('2026-04-21T00:00:00Z') });
+    assert(md.includes('_Generated: 2026-04-21_'));
+    assert(md.includes('## Study checklist'));
+    assert(md.includes('- [ ] `L1` Proofs'));
+    assert(md.includes('## Prerequisite links'));
+    assert(md.includes('- Logic -> Proofs'));
   });
 
   test('Exporter: contradictory graph includes contradiction section', () => {

@@ -2,6 +2,7 @@
   --bg: #0f1115;
   --panel: #171a21;
   --panel-2: #1d212a;
+  --panel-3: #222836;
   --border: #262b36;
   --border-2: #394153;
   --text: #e7ecf3;
@@ -13,6 +14,24 @@
   --edge: #5a8bbf;
   --edge-hover: #7cc4ff;
   --overlay: rgba(8, 10, 14, 0.68);
+}
+
+body[data-theme="light"] {
+  --bg: #f7f8fb;
+  --panel: #ffffff;
+  --panel-2: #f0f3f8;
+  --panel-3: #e7edf5;
+  --border: #d8dee9;
+  --border-2: #aeb8c8;
+  --text: #18202c;
+  --muted: #5d6878;
+  --accent: #1769c2;
+  --accent-2: #12875d;
+  --warn: #9b5a00;
+  --err: #c93f3f;
+  --edge: #527fb0;
+  --edge-hover: #1769c2;
+  --overlay: rgba(16, 24, 36, 0.36);
 }
 
 * { box-sizing: border-box; }
@@ -50,6 +69,13 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monosp
   font-family: inherit;
 }
 .btn:hover { border-color: var(--border-2); }
+.btn:focus-visible,
+.icon-btn:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn.primary {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
@@ -145,6 +171,23 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monosp
   background-size: 40px 40px;
 }
 .canvas { display: block; width: 100%; height: 100%; min-height: 420px; }
+.empty-state {
+  position: absolute; inset: 0;
+  display: grid; place-content: center;
+  text-align: center; padding: 28px;
+  pointer-events: none;
+  z-index: 1;
+}
+.empty-state h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  letter-spacing: 0;
+}
+.empty-state p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
 
 /* ---- nodes ---- */
 .node { cursor: pointer; }
@@ -233,6 +276,7 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monosp
   overflow: hidden;
 }
 .modal-body.large { width: min(1040px, 100%); }
+.modal-body.compact { width: min(520px, 100%); }
 .modal-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 18px;
@@ -313,6 +357,35 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monosp
 
 #resolve-list { padding: 6px 18px 18px; overflow: auto; }
 #resolve-list > p { margin: 6px 0 12px; }
+
+.shortcut-list {
+  display: grid; gap: 8px;
+  margin: 0;
+  padding: 14px 18px 18px;
+}
+.shortcut-list div {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.shortcut-list dt {
+  min-width: 42px;
+  background: var(--panel-3);
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  text-align: center;
+  padding: 2px 7px;
+}
+.shortcut-list dd {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
 
 .foot {
   display: flex; justify-content: space-between;
