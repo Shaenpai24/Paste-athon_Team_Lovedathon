@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ChainForge — test runner</title>
+  <link rel="stylesheet" href="../styles/main.css" />
+  <style>
+    .suite { padding: 22px 28px; }
+    #summary { font-size: 15px; font-weight: 600; margin: 0 0 14px; }
+    #summary.ok { color: var(--accent-2); }
+    #summary.err { color: var(--err); }
+    #results {
+      list-style: none; padding: 0; margin: 0;
+      display: grid; gap: 4px;
+    }
+    #results li {
+      padding: 7px 10px; border-radius: 6px; font-size: 13px;
+      background: var(--panel-2); border: 1px solid var(--border);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    #results li.pass { color: var(--accent-2); }
+    #results li.fail { color: var(--err); border-color: rgba(255,122,122,0.4); }
+    .back { color: var(--accent); text-decoration: none; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">CF</div>
+      <div>
+        <h1>ChainForge · tests</h1>
+        <p class="tagline">Browser-run suite. No Node, no internet — proves Kahn's correctness on LC-210 cases and more.</p>
+      </div>
+    </div>
+    <a class="back" href="../index.html">← back to app</a>
+  </header>
+  <section class="suite">
+    <p id="summary">running…</p>
+    <ul id="results"></ul>
+  </section>
+
+  <script src="../src/Graph.js"></script>
+  <script src="../src/Kahn.js"></script>
+  <script src="tests.js"></script>
+</body>
+</html>

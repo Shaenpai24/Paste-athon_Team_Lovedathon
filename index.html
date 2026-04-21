@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ChainForge — offline prerequisite sequencer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">CF</div>
+      <div>
+        <h1>ChainForge</h1>
+        <p class="tagline">The only logically valid order to master your course — computed offline with Kahn's algorithm.</p>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="run-healthy" class="btn primary">Run on demo curriculum</button>
+      <button id="run-cycle" class="btn">Inject contradiction</button>
+    </div>
+  </header>
+
+  <section class="stats-bar" id="stats" aria-live="polite"></section>
+
+  <div id="cycle" class="cycle-banner hidden"></div>
+
+  <main class="grid">
+    <section class="card">
+      <h2>Mastery path (topological order)</h2>
+      <p class="muted">Study top-to-bottom. Every concept appears only after all its prerequisites.</p>
+      <ol id="order" class="order"></ol>
+    </section>
+
+    <section class="card">
+      <h2>BFS layers</h2>
+      <p class="muted">Layer <code>L<sub>i</sub></code> holds every concept whose longest prerequisite chain has length <code>i</code>. You can study an entire layer in parallel.</p>
+      <div id="layers" class="layers"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>Initial commit · offline · <code>O(V + E)</code> topological sort</span>
+    <span>Tests: <a href="tests/test.html">tests/test.html</a></span>
+  </footer>
+
+  <script src="src/Graph.js"></script>
+  <script src="src/Kahn.js"></script>
+  <script src="src/App.js"></script>
+</body>
+</html>
