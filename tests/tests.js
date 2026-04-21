@@ -36,6 +36,7 @@
     Graph, kahn, findOrder, State, Storage, _memoryDriver,
     Extractor, Exporter, Resolver,
   } = window.ChainForge;
+  const { extractFromText } = window.ChainForge;
 
   const cases = [];
   const test = (name, fn) => cases.push({ name, fn });
@@ -379,6 +380,38 @@
     assert(g2.getNode('a').label === 'Alpha');
     assert(store.clear() === true);
     assert(store.load() === null);
+  });
+
+  test('Ingest: extracts concepts and direct arrow relations', () => {
+    const parsed = extractFromText(
+      '# Graph Theory\n' +
+      'BFS -> Dijkstra\n' +
+      'Dijkstra -> AStar\n'
+    );
+    assert(parsed.concepts.length >= 3);
+    const e = new Set(parsed.edges.map(([u, v]) => u + '|' + v));
+    assert(e.has('BFS|Dijkstra'));
+    assert(e.has('Dijkstra|AStar'));
+  });
+
+  test('Ingest: handles natural language prerequisites', () => {
+    const parsed = extractFromText(
+      'Dynamic Programming requires Recurrence Relations\n' +
+      'Graphs before Topological Sort\n'
+    );
+    const e = new Set(parsed.edges.map(([u, v]) => u + '|' + v));
+    assert(e.has('Recurrence_Relations|Dynamic_Programming'));
+    assert(e.has('Graphs|Topological_Sort'));
+  });
+
+  test('Ingest: parses quick notes and attaches note text to concept', () => {
+    const parsed = extractFromText(
+      'BFS\n' +
+      'Quick Note BFS: Queue-based traversal for shortest path in unweighted graphs.\n'
+    );
+    const bfs = parsed.concepts.find((c) => c.id === 'BFS');
+    assert(!!bfs, 'BFS concept must exist');
+    assert((bfs.note || '').toLowerCase().indexOf('queue-based traversal') !== -1);
   });
 
   /* ============================ commit 3 ================================ */

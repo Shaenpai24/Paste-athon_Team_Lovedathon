@@ -1,0 +1,29 @@
+# Algorithms Roadmap
+
+Math Foundations
+Discrete Math
+Recurrence Relations
+
+# Graph Fundamentals
+Graphs
+BFS
+DFS
+Topological Sort
+
+# Weighted Paths
+BFS -> Dijkstra
+Dijkstra -> AStar
+
+Dynamic Programming requires Recurrence Relations
+Graphs before Topological Sort
+Topological Sort prerequisite for Scheduling Problems
+
+Scheduling Problems depends on Graphs
+Greedy Techniques before Interval Scheduling
+Interval Scheduling -> Activity Selection
+
+# Practice Plan
+LeetCode 207 Course Schedule
+LeetCode 210 Course Schedule II
+
+LeetCode 207 before LeetCode 210 Course Schedule II

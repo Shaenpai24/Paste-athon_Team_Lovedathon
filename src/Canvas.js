@@ -49,6 +49,14 @@
       this.positions = new Map();
       this.selected = null;      // { type: 'node' | 'edge', id | [u,v] }
       this.drag = null;          // { from, pointerId, tmpLine }
+      this.nodeDrag = null;      // { id, pointerId, dx, dy, moved }
+      this.panDrag = null;       // { pointerId, x, y }
+      this.camera = { x: 0, y: 0, scale: 1 };
+      this.contentBounds = { width: 400, height: 300 };
+      this.scene = null;
+      this.edgeLayer = null;
+      this.nodeLayer = null;
+      this.overlayLayer = null;
       this.onToast = opts.onToast || (() => {});
       this.onMutate = opts.onMutate || (() => {});
       this._defs();
@@ -77,13 +85,13 @@
       }
       cycle.sort((a, b) => labelOf(a).localeCompare(labelOf(b)));
 
-      this.positions.clear();
+      const autoPositions = new Map();
       const maxLayer = healthy.size
         ? Math.max(...[...healthy.keys()])
         : -1;
       for (const [layer, ids] of healthy) {
         ids.forEach((id, row) => {
-          this.positions.set(id, {
+          autoPositions.set(id, {
             x: this.o.padX + layer * this.o.columnWidth,
             y: this.o.padY + row * this.o.rowHeight,
           });
@@ -93,12 +101,28 @@
       const cycleColX =
         this.o.padX + (maxLayer + 1) * this.o.columnWidth + this.o.cyclePadX;
       cycle.forEach((id, row) => {
-        this.positions.set(id, {
+        autoPositions.set(id, {
           x: cycleColX,
           y: this.o.padY + row * this.o.rowHeight,
           cycle: true,
         });
       });
+
+      this.positions.clear();
+      for (const [id, pos] of autoPositions) {
+        const node = this.state.graph.getNode(id);
+        const manual = node && node.meta && node.meta.pos;
+        if (manual && Number.isFinite(manual.x) && Number.isFinite(manual.y)) {
+          this.positions.set(id, {
+            x: manual.x,
+            y: manual.y,
+            cycle: !!pos.cycle,
+            manual: true,
+          });
+        } else {
+          this.positions.set(id, pos);
+        }
+      }
 
       // Size the SVG viewport to fit content
       const maxX = Math.max(
@@ -112,6 +136,10 @@
         ...([...healthy.values()].map((a) => a.length).concat([1]))
       );
       const maxY = this.o.padY + maxRows * this.o.rowHeight;
+      this.contentBounds = {
+        width: maxX + this.o.padX,
+        height: maxY + 40,
+      };
       this.svg.setAttribute('viewBox', `0 0 ${maxX + this.o.padX} ${maxY + 40}`);
       this.svg.style.minHeight = (maxY + 40) + 'px';
     }
@@ -142,10 +170,17 @@
         if (n.tagName !== 'defs') this.svg.removeChild(n);
       });
 
-      const edgeLayer = svgEl('g', { class: 'edges' });
-      const nodeLayer = svgEl('g', { class: 'nodes' });
-      this.svg.appendChild(edgeLayer);
-      this.svg.appendChild(nodeLayer);
+      this.scene = svgEl('g', {
+        class: 'scene',
+        transform: `translate(${this.camera.x},${this.camera.y}) scale(${this.camera.scale})`,
+      });
+      this.edgeLayer = svgEl('g', { class: 'edges' });
+      this.nodeLayer = svgEl('g', { class: 'nodes' });
+      this.overlayLayer = svgEl('g', { class: 'overlay' });
+      this.scene.appendChild(this.edgeLayer);
+      this.scene.appendChild(this.nodeLayer);
+      this.scene.appendChild(this.overlayLayer);
+      this.svg.appendChild(this.scene);
 
       // Edges
       for (const [u, v] of this.state.graph.edges()) {
@@ -168,7 +203,7 @@
           e.stopPropagation();
           this._selectEdge(u, v);
         });
-        edgeLayer.appendChild(path);
+        this.edgeLayer.appendChild(path);
 
         // X button when selected
         if (this._isEdgeSelected(u, v)) {
@@ -191,7 +226,7 @@
             this.selected = null;
             this.onMutate();
           });
-          edgeLayer.appendChild(btn);
+          this.edgeLayer.appendChild(btn);
         }
       }
 
@@ -247,11 +282,17 @@
         });
         g.appendChild(port);
 
+        g.addEventListener('pointerdown', (e) => {
+          if (e.target === port) return;
+          this._startNodeDrag(id, e);
+        });
+
         g.addEventListener('click', (e) => {
           e.stopPropagation();
+          if (this.nodeDrag && this.nodeDrag.id === id && this.nodeDrag.moved) return;
           this._selectNode(id);
         });
-        nodeLayer.appendChild(g);
+        this.nodeLayer.appendChild(g);
       }
     }
 
@@ -288,48 +329,109 @@
         d: `M ${x1} ${y1} L ${x1} ${y1}`,
         class: 'edge ghost',
       });
-      this.svg.appendChild(line);
+      this.overlayLayer.appendChild(line);
       this.drag = { from: fromId, pointerId: evt.pointerId, tmpLine: line, x1, y1 };
     }
 
+    _startNodeDrag(id, evt) {
+      const p = this.positions.get(id);
+      if (!p) return;
+      const world = this._clientToWorld(evt);
+      this.svg.setPointerCapture(evt.pointerId);
+      this.nodeDrag = {
+        id,
+        pointerId: evt.pointerId,
+        dx: world.x - p.x,
+        dy: world.y - p.y,
+        moved: false,
+      };
+      evt.preventDefault();
+      evt.stopPropagation();
+    }
+
     _onPointerMove(evt) {
-      if (!this.drag || evt.pointerId !== this.drag.pointerId) return;
-      const pt = this._clientToSvg(evt);
-      const { x1, y1 } = this.drag;
-      const mx = (x1 + pt.x) / 2;
-      this.drag.tmpLine.setAttribute(
-        'd',
-        `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${pt.y}, ${pt.x} ${pt.y}`
-      );
+      if (this.drag && evt.pointerId === this.drag.pointerId) {
+        const pt = this._clientToWorld(evt);
+        const { x1, y1 } = this.drag;
+        const mx = (x1 + pt.x) / 2;
+        this.drag.tmpLine.setAttribute(
+          'd',
+          `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${pt.y}, ${pt.x} ${pt.y}`
+        );
+        return;
+      }
+
+      if (this.nodeDrag && evt.pointerId === this.nodeDrag.pointerId) {
+        const pt = this._clientToWorld(evt);
+        const p = this.positions.get(this.nodeDrag.id);
+        if (!p) return;
+        const nx = pt.x - this.nodeDrag.dx;
+        const ny = pt.y - this.nodeDrag.dy;
+        const moved = Math.abs(nx - p.x) > 1 || Math.abs(ny - p.y) > 1;
+        if (moved) this.nodeDrag.moved = true;
+        p.x = nx;
+        p.y = ny;
+        this._setManualPos(this.nodeDrag.id, nx, ny);
+        this._draw();
+        return;
+      }
+
+      if (this.panDrag && evt.pointerId === this.panDrag.pointerId) {
+        const now = this._clientToSvg(evt);
+        this.camera.x += now.x - this.panDrag.x;
+        this.camera.y += now.y - this.panDrag.y;
+        this.panDrag.x = now.x;
+        this.panDrag.y = now.y;
+        this._draw();
+      }
     }
 
     _onPointerUp(evt) {
-      if (!this.drag || evt.pointerId !== this.drag.pointerId) return;
-      const target = this._nodeAt(evt);
-      const from = this.drag.from;
-      this.drag.tmpLine.remove();
-      try { this.svg.releasePointerCapture(evt.pointerId); } catch (_) {}
-      this.drag = null;
+      if (this.drag && evt.pointerId === this.drag.pointerId) {
+        const target = this._nodeAt(evt);
+        const from = this.drag.from;
+        this.drag.tmpLine.remove();
+        try { this.svg.releasePointerCapture(evt.pointerId); } catch (_) {}
+        this.drag = null;
 
-      if (!target || target === from) { this.onMutate(); return; }
-      const res = this.state.addEdge(from, target);
-      if (!res.success && res.reason === 'cycle') {
-        const path = res.cyclePath || [from, target];
-        this.onToast(
-          'Cycle rejected: adding this edge would create the loop  ' +
-          path.map((id) => this._labelOf(id)).join(' → ')
-        );
-      } else if (res.success) {
-        const n = res.affected ? res.affected.size : 0;
-        this.onToast(
-          `Edge added. Re-layered ${n} concept${n === 1 ? '' : 's'} (partial BFS).`
-        );
+        if (!target || target === from) { this.onMutate(); return; }
+        const res = this.state.addEdge(from, target);
+        if (!res.success && res.reason === 'cycle') {
+          const path = res.cyclePath || [from, target];
+          this.onToast(
+            'Cycle rejected: adding this edge would create the loop  ' +
+            path.map((id) => this._labelOf(id)).join(' -> ')
+          );
+        } else if (res.success) {
+          const n = res.affected ? res.affected.size : 0;
+          this.onToast(
+            `Edge added. Re-layered ${n} concept${n === 1 ? '' : 's'} (partial BFS).`
+          );
+        }
+        this.onMutate();
+        return;
       }
-      this.onMutate();
+
+      if (this.nodeDrag && evt.pointerId === this.nodeDrag.pointerId) {
+        try { this.svg.releasePointerCapture(evt.pointerId); } catch (_) {}
+        const id = this.nodeDrag.id;
+        const moved = this.nodeDrag.moved;
+        this.nodeDrag = null;
+        if (moved) {
+          this.onMutate();
+        } else {
+          this._selectNode(id);
+        }
+        return;
+      }
+
+      if (this.panDrag && evt.pointerId === this.panDrag.pointerId) {
+        this.panDrag = null;
+      }
     }
 
     _nodeAt(evt) {
-      const pt = this._clientToSvg(evt);
+      const pt = this._clientToWorld(evt);
       for (const [id, p] of this.positions) {
         if (
           pt.x >= p.x && pt.x <= p.x + this.o.nodeWidth &&
@@ -350,6 +452,35 @@
       return { x: p.x, y: p.y };
     }
 
+    _clientToWorld(evt) {
+      const p = this._clientToSvg(evt);
+      return {
+        x: (p.x - this.camera.x) / this.camera.scale,
+        y: (p.y - this.camera.y) / this.camera.scale,
+      };
+    }
+
+    _setManualPos(id, x, y) {
+      const n = this.state.graph.getNode(id);
+      if (!n) return;
+      n.meta = n.meta || {};
+      n.meta.pos = { x, y };
+    }
+
+    autoLayout() {
+      for (const id of this.state.graph.nodes()) {
+        const n = this.state.graph.getNode(id);
+        if (!n || !n.meta || !n.meta.pos) continue;
+        delete n.meta.pos;
+      }
+      this.onMutate();
+    }
+
+    resetView() {
+      this.camera = { x: 0, y: 0, scale: 1 };
+      this._draw();
+    }
+
     /* ------------------------------ events ------------------------------- */
 
     _bind() {
@@ -357,8 +488,28 @@
       this.svg.addEventListener('pointerup', (e) => this._onPointerUp(e));
       this.svg.addEventListener('pointercancel', (e) => this._onPointerUp(e));
 
-      this.svg.addEventListener('click', () => {
-        // Click on empty canvas clears selection.
+      this.svg.addEventListener('pointerdown', (e) => {
+        if (e.target !== this.svg) return;
+        const p = this._clientToSvg(e);
+        this.panDrag = { pointerId: e.pointerId, x: p.x, y: p.y };
+      });
+
+      this.svg.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const pt = this._clientToSvg(e);
+        const worldX = (pt.x - this.camera.x) / this.camera.scale;
+        const worldY = (pt.y - this.camera.y) / this.camera.scale;
+        const factor = e.deltaY < 0 ? 1.1 : 0.9;
+        const next = Math.max(0.35, Math.min(2.5, this.camera.scale * factor));
+        this.camera.scale = next;
+        this.camera.x = pt.x - worldX * next;
+        this.camera.y = pt.y - worldY * next;
+        this._draw();
+      }, { passive: false });
+
+      this.svg.addEventListener('click', (e) => {
+        // Only a direct click on empty canvas clears selection.
+        if (e.target !== this.svg) return;
         if (this.selected) { this.selected = null; this.onMutate(); }
       });
       this.svg.addEventListener('dblclick', (e) => {

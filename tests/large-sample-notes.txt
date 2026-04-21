@@ -1,0 +1,201 @@
+# Foundation Track
+Arithmetic
+Algebra
+Logic
+Proof Techniques
+Set Theory
+Functions
+Recurrence Relations
+Combinatorics
+Probability Basics
+Linear Algebra Basics
+
+Arithmetic before Algebra
+Algebra before Functions
+Logic before Proof Techniques
+Set Theory before Combinatorics
+Functions requires Algebra
+Probability Basics requires Combinatorics
+
+# Discrete And Core CS
+Discrete Math
+Graph Theory Basics
+Trees
+Hashing
+Stacks and Queues
+Linked Lists
+Arrays
+Strings
+Bit Manipulation
+Number Theory
+
+Proof Techniques -> Discrete Math
+Set Theory -> Discrete Math
+Discrete Math -> Graph Theory Basics
+Discrete Math -> Trees
+Discrete Math -> Number Theory
+Arrays before Strings
+Arrays before Stacks and Queues
+Linked Lists before Hashing
+
+# Graph Algorithms
+BFS
+DFS
+Topological Sort
+Shortest Path Unweighted
+Dijkstra
+Bellman Ford
+Floyd Warshall
+Minimum Spanning Tree
+Kruskal
+Prim
+Union Find
+Strongly Connected Components
+
+Graph Theory Basics before BFS
+Graph Theory Basics before DFS
+BFS -> Shortest Path Unweighted
+DFS -> Topological Sort
+Shortest Path Unweighted before Dijkstra
+Dijkstra before Bellman Ford
+Bellman Ford before Floyd Warshall
+Graph Theory Basics before Minimum Spanning Tree
+Minimum Spanning Tree before Kruskal
+Minimum Spanning Tree before Prim
+Union Find needed for Kruskal
+DFS prerequisite for Strongly Connected Components
+
+# Dynamic Programming Track
+Memoization
+Tabulation
+1D Dynamic Programming
+2D Dynamic Programming
+Knapsack
+Longest Common Subsequence
+Longest Increasing Subsequence
+Matrix Chain Multiplication
+Digit DP
+Bitmask DP
+Tree DP
+
+Recurrence Relations before Memoization
+Memoization before Tabulation
+Tabulation before 1D Dynamic Programming
+1D Dynamic Programming before 2D Dynamic Programming
+2D Dynamic Programming before Knapsack
+2D Dynamic Programming before Longest Common Subsequence
+1D Dynamic Programming before Longest Increasing Subsequence
+2D Dynamic Programming before Matrix Chain Multiplication
+Bit Manipulation before Bitmask DP
+Trees before Tree DP
+
+# Advanced Data Structures
+Heap
+Priority Queue
+Fenwick Tree
+Segment Tree
+Lazy Propagation
+Sparse Table
+Trie
+Suffix Array
+Rolling Hash
+Monotonic Stack
+Monotonic Queue
+
+Arrays before Heap
+Heap before Priority Queue
+Arrays before Fenwick Tree
+Fenwick Tree before Segment Tree
+Segment Tree before Lazy Propagation
+Arrays before Sparse Table
+Strings before Trie
+Strings before Rolling Hash
+Rolling Hash before Suffix Array
+Stacks and Queues before Monotonic Stack
+Stacks and Queues before Monotonic Queue
+
+# Problem Solving And Patterns
+Two Pointers
+Sliding Window
+Binary Search
+Greedy Techniques
+Backtracking
+Divide and Conquer
+Meet in the Middle
+Prefix Sum
+Difference Array
+Coordinate Compression
+
+Arrays before Two Pointers
+Two Pointers before Sliding Window
+Arrays before Prefix Sum
+Prefix Sum before Difference Array
+Binary Search before Divide and Conquer
+Greedy Techniques before Activity Selection
+Backtracking before Meet in the Middle
+Arrays before Coordinate Compression
+
+# Courses And LeetCode Mapping
+LeetCode 1 Two Sum
+LeetCode 3 Longest Substring
+LeetCode 15 3Sum
+LeetCode 53 Maximum Subarray
+LeetCode 70 Climbing Stairs
+LeetCode 121 Best Time to Buy and Sell Stock
+LeetCode 141 Linked List Cycle
+LeetCode 200 Number of Islands
+LeetCode 207 Course Schedule
+LeetCode 210 Course Schedule II
+LeetCode 300 Longest Increasing Subsequence
+LeetCode 322 Coin Change
+LeetCode 416 Partition Equal Subset Sum
+LeetCode 743 Network Delay Time
+LeetCode 994 Rotting Oranges
+
+Two Pointers before LeetCode 15 3Sum
+Sliding Window before LeetCode 3 Longest Substring
+1D Dynamic Programming before LeetCode 70 Climbing Stairs
+1D Dynamic Programming before LeetCode 53 Maximum Subarray
+Linked Lists before LeetCode 141 Linked List Cycle
+BFS before LeetCode 994 Rotting Oranges
+DFS before LeetCode 200 Number of Islands
+Topological Sort before LeetCode 207 Course Schedule
+LeetCode 207 Course Schedule before LeetCode 210 Course Schedule II
+Longest Increasing Subsequence before LeetCode 300 Longest Increasing Subsequence
+Knapsack before LeetCode 416 Partition Equal Subset Sum
+Dijkstra before LeetCode 743 Network Delay Time
+2D Dynamic Programming before LeetCode 322 Coin Change
+
+# Interview Sprint Sequence
+Revision Day 1
+Revision Day 2
+Revision Day 3
+Revision Day 4
+Mock Interview 1
+Mock Interview 2
+
+Revision Day 1 before Revision Day 2
+Revision Day 2 before Revision Day 3
+Revision Day 3 before Revision Day 4
+Revision Day 4 before Mock Interview 1
+Mock Interview 1 before Mock Interview 2
+
+# Mixed Relation Style For Parser
+Greedy Techniques depends on Proof Techniques
+Activity Selection depends on Greedy Techniques
+Binary Search prerequisite for LeetCode 121 Best Time to Buy and Sell Stock
+Coordinate Compression needed for Fenwick Tree
+Segment Tree requires Monotonic Queue
+
+# Quick Notes
+Quick Note BFS: Queue-based traversal that gives shortest path lengths in unweighted graphs.
+Quick Note DFS: Depth-first traversal useful for components, cycle checks, and ordering tasks.
+Quick Note Topological Sort: Orders DAG nodes so every prerequisite appears before dependent topics.
+Quick Note Dijkstra: Greedy shortest path algorithm for graphs with non-negative edge weights.
+Quick Note Bellman Ford: Handles negative edges and detects negative cycles with repeated relaxation.
+Quick Note Union Find: Disjoint set structure for near-constant-time connectivity and merge operations.
+Quick Note Segment Tree: Range query and update structure, often paired with lazy propagation.
+Quick Note Fenwick Tree: Compact binary indexed tree for prefix sums and point updates.
+Quick Note Knapsack: Canonical dynamic programming pattern for capacity-constrained optimization.
+Quick Note LeetCode 207 Course Schedule: Checks if course prerequisite graph is acyclic.
+Quick Note LeetCode 210 Course Schedule II: Returns one valid topological ordering of courses.

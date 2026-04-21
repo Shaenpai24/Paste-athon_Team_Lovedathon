@@ -35,6 +35,17 @@
         <input id="new-concept" type="text" placeholder="e.g. Dynamic Programming" autocomplete="off" />
         <button id="add-concept" class="btn primary">Add</button>
       </div>
+      <h2>Import notes</h2>
+      <div class="import-tools">
+        <input id="doc-file" type="file" accept=".txt,.md,text/plain,text/markdown" />
+        <textarea id="doc-text" rows="5" placeholder="Paste lecture notes or markdown here..."></textarea>
+        <div class="row-actions">
+          <button id="analyze-doc" class="btn">Analyze</button>
+          <button id="merge-doc" class="btn primary">Merge into graph</button>
+          <button id="replace-doc" class="btn">Replace graph</button>
+        </div>
+        <p id="import-summary" class="muted">No document analyzed yet.</p>
+      </div>
       <p class="muted">
         <b>Drag</b> the blue port on a node's right edge onto another node to
         draw a prerequisite. <b>Double-click</b> empty canvas to create a
@@ -45,9 +56,34 @@
       <h2>Mastery path</h2>
       <p class="muted">Sorted layer-first — study top-to-bottom.</p>
       <ol id="order" class="order"></ol>
+
+      <h2>Subject quick notes</h2>
+      <div class="selected-node-strip">
+        <span class="muted">Selected node</span>
+        <strong id="selected-node-title">None</strong>
+      </div>
+      <div id="subject-panel" class="subject-panel">
+        <p id="subject-empty" class="muted">Click a node to see quick details and add notes.</p>
+        <div id="subject-info" class="hidden">
+          <h3 id="subject-title" class="subject-title"></h3>
+          <p id="subject-meta" class="subject-meta"></p>
+          <p id="subject-prereqs" class="subject-line"></p>
+          <p id="subject-dependents" class="subject-line"></p>
+          <textarea id="subject-note" rows="5" placeholder="Write short revision notes for this subject..."></textarea>
+          <div class="row-actions">
+            <button id="save-note" class="btn primary">Save note</button>
+            <button id="clear-note" class="btn">Clear note</button>
+          </div>
+        </div>
+      </div>
     </aside>
 
     <section class="canvas-wrap">
+      <div class="canvas-ui">
+        <button id="auto-layout" class="btn">Auto layout</button>
+        <button id="reset-view" class="btn">Reset view</button>
+      </div>
+      <p class="canvas-hint">Drag nodes to reposition. Scroll to zoom. Drag empty space to pan.</p>
       <div id="empty-state" class="empty-state hidden">
         <h2>Start with one concept</h2>
         <p>Import notes, double-click the canvas, or type a concept on the left.</p>
@@ -136,6 +172,7 @@
   <script src="src/Exporter.js"></script>
   <script src="src/Resolver.js"></script>
   <script src="src/Canvas.js"></script>
+  <script src="src/Ingest.js"></script>
   <script src="src/App.js"></script>
 </body>
 </html>
