@@ -21,7 +21,7 @@ When you're stuck in a course, the real problem is usually not that one topic is
 |---|--------|-------|
 | 1 | **Foundation** ✓ | Graph data structure, Kahn's algorithm with BFS layering, cycle detection, browser-based test suite, minimal demo UI |
 | 2 | **Interactive canvas + incremental updates** ✓ | SVG canvas, drag-to-add edges, partial BFS re-layering on every edit (`O(V'+E')`), node/edge removal with descendant recomputation, cycle rejection showing the closing path, localStorage persistence |
-| 3 | Document ingestion + concept extraction | Paste notes / upload .txt / .md, offline concept extractor, auto-edge suggestion, mastery-path export, contradiction resolver |
+| 3 | **Document ingestion + concept extraction** ✓ | Paste notes / upload .txt / .md, offline concept extractor, auto-edge suggestion, mastery-path export, contradiction resolver |
 | 4 | Polish | Theming, keyboard shortcuts, empty states, export to Markdown study plan, packaged single-file build |
 
 ## Complexity guarantees
@@ -61,11 +61,15 @@ ChainForge/
 │   ├── State.js          # incremental layer maintenance & cycle-pre-check
 │   ├── Storage.js        # localStorage persistence (injectable driver)
 │   ├── Canvas.js         # SVG renderer + drag-to-edit interactions
+│   ├── Extractor.js      # offline concept + prerequisite suggestion engine
+│   ├── Exporter.js       # Markdown mastery-path export
+│   ├── Resolver.js       # concrete cycle recovery for contradictions
 │   └── App.js            # demo wiring
 ├── tests/
 │   ├── test.html         # browser test runner
-│   └── tests.js          # 32 cases: LC210 + layering + cycles + incremental
-│                         #           + partiality proofs + storage
+│   └── tests.js          # 38 cases: LC210 + layering + cycles + incremental
+│                         #           + partiality proofs + storage + ingestion
+│                         #           + export + resolver
 ├── styles/
 │   └── main.css
 └── README.md
