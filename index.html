@@ -16,8 +16,12 @@
       </div>
     </div>
     <div class="actions">
-      <button id="reset-demo" class="btn">Demo curriculum</button>
-      <button id="clear-all" class="btn">Clear all</button>
+      <button id="import-btn" class="btn primary">Import notes</button>
+      <button id="export-btn" class="btn">Export</button>
+      <button id="theme-toggle" class="btn" aria-pressed="false">Light</button>
+      <button id="shortcuts-btn" class="btn" aria-label="Keyboard shortcuts">?</button>
+      <button id="reset-demo" class="btn">Demo</button>
+      <button id="clear-all" class="btn">Clear</button>
     </div>
   </header>
 
@@ -44,9 +48,10 @@
       </div>
       <p class="muted">
         <b>Drag</b> the blue port on a node's right edge onto another node to
-        draw a prerequisite. <b>Double-click</b> empty canvas to create a new
+        draw a prerequisite. <b>Double-click</b> empty canvas to create a
         concept. <b>Click</b> a node or edge, then press <code>Delete</code> to
-        remove it. Your graph auto-saves to this browser.
+        remove it. <b>Import notes</b> pulls concepts + edges from your
+        material. Your graph auto-saves to this browser.
       </p>
       <h2>Mastery path</h2>
       <p class="muted">Sorted layer-first — study top-to-bottom.</p>
@@ -79,21 +84,93 @@
         <button id="reset-view" class="btn">Reset view</button>
       </div>
       <p class="canvas-hint">Drag nodes to reposition. Scroll to zoom. Drag empty space to pan.</p>
+      <div id="empty-state" class="empty-state hidden">
+        <h2>Start with one concept</h2>
+        <p>Import notes, double-click the canvas, or type a concept on the left.</p>
+      </div>
       <svg id="canvas" class="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
     </section>
   </main>
 
+  <!-- Import modal -->
+  <div id="import-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="import-title">
+    <div class="modal-body large">
+      <div class="modal-head">
+        <h2 id="import-title">Import notes</h2>
+        <button id="import-close" class="icon-btn" aria-label="Close">×</button>
+      </div>
+      <p class="muted">
+        Paste your course notes, or load a <code>.md</code> / <code>.txt</code> file.
+        ChainForge will suggest concepts and prerequisite edges; nothing is
+        added until you hit <b>Apply</b>. Everything runs locally.
+      </p>
+      <div class="modal-grid">
+        <div>
+          <div class="form-row">
+            <input id="import-file" type="file" accept=".md,.txt,.markdown,text/*" />
+            <button id="import-extract" class="btn primary">Extract</button>
+          </div>
+          <textarea id="import-text" placeholder="# Discrete Math&#10;&#10;Prerequisites:&#10;- Logic&#10;- Algebra&#10;&#10;Discrete Math builds on Proofs."></textarea>
+          <p class="muted small">Patterns recognised: headings (<code># …</code>), <code>Prerequisites:</code> lists,
+            <code>X requires Y</code> / <code>X depends on Y</code> / <code>X builds on Y</code>,
+            wiki-style <code>[[Links]]</code>, and frequent capitalised phrases.</p>
+        </div>
+        <div class="preview-panel" id="import-preview"></div>
+      </div>
+      <div class="modal-foot">
+        <button id="import-apply" class="btn primary" disabled>Apply selected</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolve modal -->
+  <div id="resolve-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="resolve-title">
+    <div class="modal-body">
+      <div class="modal-head">
+        <h2 id="resolve-title">Resolve contradiction</h2>
+        <button id="resolve-close" class="icon-btn" aria-label="Close">×</button>
+      </div>
+      <p class="muted">
+        Kahn's algorithm can't finish while a cycle exists. Drop any edge on
+        the detected cycle to restore a valid total order; ChainForge will
+        re-layer the affected descendants incrementally.
+      </p>
+      <div id="resolve-list"></div>
+    </div>
+  </div>
+
+  <!-- Shortcuts modal -->
+  <div id="shortcuts-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+    <div class="modal-body compact">
+      <div class="modal-head">
+        <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+        <button id="shortcuts-close" class="icon-btn" aria-label="Close">×</button>
+      </div>
+      <dl class="shortcut-list">
+        <div><dt>I</dt><dd>Import notes</dd></div>
+        <div><dt>E</dt><dd>Export Markdown</dd></div>
+        <div><dt>N</dt><dd>Focus concept input</dd></div>
+        <div><dt>T</dt><dd>Switch theme</dd></div>
+        <div><dt>?</dt><dd>Show shortcuts</dd></div>
+        <div><dt>Esc</dt><dd>Close modal</dd></div>
+      </dl>
+    </div>
+  </div>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <footer class="foot">
-    <span>commit 2 · offline · interactive · <code>O(V'+E')</code> partial BFS re-layering on every edit</span>
-    <span>Tests: <a href="tests/test.html">tests/test.html</a></span>
+    <span>commit 4 · polished · themed · keyboard-ready · packaged</span>
+    <span><a href="tests/test.html">Tests</a> · <a href="dist/chainforge.html">Single-file build</a></span>
   </footer>
 
   <script src="src/Graph.js"></script>
   <script src="src/Kahn.js"></script>
   <script src="src/State.js"></script>
   <script src="src/Storage.js"></script>
+  <script src="src/Extractor.js"></script>
+  <script src="src/Exporter.js"></script>
+  <script src="src/Resolver.js"></script>
   <script src="src/Canvas.js"></script>
   <script src="src/Ingest.js"></script>
   <script src="src/App.js"></script>

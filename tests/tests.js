@@ -19,12 +19,24 @@
  *   - Partiality: edit affects only a proper subset of nodes
  *   - Storage save/load round-trip with in-memory driver
  *
+ * Commit 3 coverage:
+ *   - Offline concept extraction from headings, cue lists, wiki-links, verbs
+ *   - Markdown export for healthy DAGs and contradictory graphs
+ *   - Concrete cycle recovery for the contradiction resolver
+ *
+ * Commit 4 coverage:
+ *   - Polished Markdown exports with checklists and prerequisite links
+ *
  * All assertions run on page load and render to #results.
  */
 (function () {
   'use strict';
 
-  const { Graph, kahn, findOrder, State, Storage, _memoryDriver, extractFromText } = window.ChainForge;
+  const {
+    Graph, kahn, findOrder, State, Storage, _memoryDriver,
+    Extractor, Exporter, Resolver,
+  } = window.ChainForge;
+  const { extractFromText } = window.ChainForge;
 
   const cases = [];
   const test = (name, fn) => cases.push({ name, fn });
@@ -400,6 +412,92 @@
     const bfs = parsed.concepts.find((c) => c.id === 'BFS');
     assert(!!bfs, 'BFS concept must exist');
     assert((bfs.note || '').toLowerCase().indexOf('queue-based traversal') !== -1);
+  });
+
+  /* ============================ commit 3 ================================ */
+
+  test('Extractor: headings and prerequisite bullets create concepts and edges', () => {
+    const text = [
+      '# Discrete Math',
+      '',
+      'Prerequisites:',
+      '- Logic',
+      '- Algebra',
+    ].join('\n');
+    const out = Extractor.extract(text);
+    const labels = out.concepts.map((c) => c.label).sort();
+    assert(deepEq(labels, ['Algebra', 'Discrete Math', 'Logic']));
+    const edges = out.edges.map((e) => `${e.from}->${e.to}`).sort();
+    assert(deepEq(edges, ['Algebra->Discrete Math', 'Logic->Discrete Math']));
+  });
+
+  test('Extractor: verb patterns use known concepts as anchors', () => {
+    const out = Extractor.extract(
+      'Graph Algorithms requires Discrete Math. Topological Sort builds on Graph Algorithms.',
+      ['Graph Algorithms', 'Discrete Math', 'Topological Sort']
+    );
+    const edges = out.edges.map((e) => `${e.from}->${e.to}`).sort();
+    assert(edges.includes('Discrete Math->Graph Algorithms'));
+    assert(edges.includes('Graph Algorithms->Topological Sort'));
+  });
+
+  test('Extractor: wiki links and repeated capitalised phrases become concepts only', () => {
+    const out = Extractor.extract(
+      'Study [[Kahn Algorithm]]. Kahn Algorithm is useful. Kahn Algorithm appears again.'
+    );
+    const labels = out.concepts.map((c) => c.label);
+    assert(labels.includes('Kahn Algorithm'));
+    assert(out.edges.length === 0);
+  });
+
+  test('Exporter: healthy graph becomes ordered Markdown with layer breakdown', () => {
+    const g = new Graph();
+    g.addNode('logic', 'Logic');
+    g.addNode('proofs', 'Proofs');
+    g.addEdge('logic', 'proofs');
+    const s = new State(g); s.recomputeAll();
+    const md = Exporter.toMarkdown(s, { title: 'Plan', footer: '_done_' });
+    assert(md.includes('# Plan'));
+    assert(md.includes('1. `L0` Logic'));
+    assert(md.includes('2. `L1` Proofs'));
+    assert(md.includes('### Layer 1'));
+    assert(md.includes('**Proofs** _(after: Logic)_'));
+  });
+
+  test('Exporter: polished Markdown includes checklist and link appendix', () => {
+    const g = new Graph();
+    g.addNode('logic', 'Logic');
+    g.addNode('proofs', 'Proofs');
+    g.addEdge('logic', 'proofs');
+    const s = new State(g); s.recomputeAll();
+    const md = Exporter.toMarkdown(s, { generatedAt: new Date('2026-04-21T00:00:00Z') });
+    assert(md.includes('_Generated: 2026-04-21_'));
+    assert(md.includes('## Study checklist'));
+    assert(md.includes('- [ ] `L1` Proofs'));
+    assert(md.includes('## Prerequisite links'));
+    assert(md.includes('- Logic -> Proofs'));
+  });
+
+  test('Exporter: contradictory graph includes contradiction section', () => {
+    const g = new Graph();
+    g.addEdge('a', 'b'); g.addEdge('b', 'c'); g.addEdge('c', 'a');
+    const s = new State(g); s.recomputeAll();
+    const md = Exporter.toMarkdown(s);
+    assert(md.includes('contradiction detected'));
+    assert(md.includes('## Contradiction'));
+    assert(md.includes('- a') && md.includes('- b') && md.includes('- c'));
+  });
+
+  test('Resolver: recovers a concrete cycle and edge list', () => {
+    const g = new Graph();
+    g.addEdge('a', 'b'); g.addEdge('b', 'c'); g.addEdge('c', 'a');
+    g.addEdge('c', 'tail');
+    const s = new State(g); s.recomputeAll();
+    const path = Resolver.findCyclePath(g, s.cycle);
+    assert(path && path[0] === path[path.length - 1], 'closed path');
+    const edges = Resolver.cyclePathEdges(path);
+    assert(edges.length >= 3);
+    for (const [u, v] of edges) assert(g.hasEdge(u, v), `${u}->${v} must exist`);
   });
 
   /* ------------- runner ------------------------------------------------- */

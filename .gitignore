@@ -1,6 +1,8 @@
 .DS_Store
 node_modules/
-dist/
+dist/*
+!dist/
+!dist/chainforge.html
 .vscode/
 .idea/
 *.log
