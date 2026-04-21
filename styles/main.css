@@ -97,10 +97,56 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monosp
 }
 .form-row input:focus { outline: none; border-color: var(--accent); }
 
+.import-tools {
+  display: grid;
+  gap: 8px;
+  margin: 6px 0 10px;
+}
+
+.import-tools input[type="file"] {
+  width: 100%;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.import-tools textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 112px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.import-tools textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.err-text {
+  color: var(--err);
+}
+
 .order {
   list-style: none; padding: 0; margin: 0;
   display: grid; gap: 5px;
   max-height: 48vh; overflow: auto;
+}
+
+@media (max-width: 900px) {
+  .order {
+    max-height: none;
+  }
 }
 .order li {
   background: var(--panel-2); border: 1px solid var(--border);
@@ -114,6 +160,68 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monosp
   border: 1px solid rgba(124,196,255,0.25);
   color: var(--accent);
   padding: 1px 7px; border-radius: 999px; font-size: 11px;
+}
+
+.subject-panel {
+  margin-top: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.selected-node-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+#selected-node-title {
+  font-size: 13px;
+  color: var(--accent-2);
+}
+
+.subject-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.subject-meta {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.subject-line {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+#subject-note {
+  width: 100%;
+  resize: vertical;
+  min-height: 108px;
+  background: #131722;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 12.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+#subject-note:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .canvas-wrap {
@@ -130,6 +238,29 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monosp
 }
 .canvas { display: block; width: 100%; height: 100%; min-height: 420px; }
 
+.canvas-ui {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  display: flex;
+  gap: 8px;
+}
+
+.canvas-hint {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  margin: 0;
+  z-index: 5;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: rgba(15, 17, 21, 0.8);
+  border: 1px solid var(--border);
+}
+
 /* ---- nodes ---- */
 .node { cursor: pointer; }
 .node .node-box {
@@ -139,6 +270,7 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monosp
   transition: fill 120ms, stroke 120ms;
 }
 .node:hover .node-box { stroke: var(--accent); }
+.node:active { cursor: grabbing; }
 .node.selected .node-box {
   stroke: var(--accent-2);
   stroke-width: 2;
@@ -186,6 +318,23 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monosp
   pointer-events: none;
 }
 .edge-del { cursor: pointer; }
+
+.scene {
+  transition: transform 90ms linear;
+}
+
+@media (max-width: 700px) {
+  .canvas-ui {
+    left: 10px;
+    right: auto;
+    top: 42px;
+  }
+
+  .canvas-hint {
+    right: 10px;
+    max-width: calc(100% - 20px);
+  }
+}
 
 /* ---- toast ---- */
 .toast {

@@ -8,7 +8,7 @@
 (function () {
   'use strict';
 
-  const { Graph, State, Canvas, Storage } = window.ChainForge;
+  const { Graph, State, Canvas, Storage, extractFromText } = window.ChainForge;
 
   const DEMO_EDGES = [
     ['Arithmetic',       'Algebra'],
@@ -35,6 +35,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     const storage = new Storage();
+    let analyzedDoc = null;
 
     // Initial graph: from localStorage, else demo.
     let graph = storage.load();
@@ -54,6 +55,8 @@
       renderStats();
       renderOrder();
       renderCycle();
+      renderSelectedNodeTitle();
+      renderSubjectInfo();
     }
 
     function renderStats() {
@@ -87,6 +90,77 @@
       if (i === 1) ol.innerHTML = '<li class="empty">Graph is empty. Double-click the canvas to add a concept.</li>';
     }
 
+    function setImportSummary(msg, isError = false) {
+      const el = document.getElementById('import-summary');
+      el.textContent = msg;
+      el.classList.toggle('err-text', !!isError);
+    }
+
+    function getDocText() {
+      return (document.getElementById('doc-text').value || '').trim();
+    }
+
+    function analyzeText(text) {
+      if (!text) {
+        analyzedDoc = null;
+        setImportSummary('Paste notes or choose a file before analyzing.', true);
+        return null;
+      }
+      analyzedDoc = extractFromText(text);
+      const c = analyzedDoc.concepts.length;
+      const e = analyzedDoc.edges.length;
+      const ignored = analyzedDoc.ignoredRelations;
+      setImportSummary(`Extracted ${c} concepts, ${e} links. ${ignored} relation${ignored === 1 ? '' : 's'} ignored.`);
+      return analyzedDoc;
+    }
+
+    function applyImport(parsed, replaceAll) {
+      if (!parsed) {
+        showToast('Analyze a document first.');
+        return;
+      }
+
+      if (replaceAll) {
+        state.graph = new Graph();
+        state.layerOf = new Map();
+        state.cycle = null;
+        canvas.state = state;
+        canvas.selected = null;
+      }
+
+      let addedNodes = 0;
+      let addedEdges = 0;
+      let rejectedCycles = 0;
+
+      for (const n of parsed.concepts) {
+        if (!state.graph.hasNode(n.id)) {
+          state.addNode(n.id, n.label);
+          addedNodes++;
+        }
+        if (n.note) {
+          const node = state.graph.getNode(n.id);
+          node.meta = node.meta || {};
+          if (!node.meta.note) node.meta.note = n.note;
+        }
+      }
+
+      for (const [u, v] of parsed.edges) {
+        const r = state.addEdge(u, v);
+        if (r.success && !r.noop) addedEdges++;
+        if (!r.success && r.reason === 'cycle') rejectedCycles++;
+      }
+
+      state.recomputeAll();
+      refresh();
+      storage.save(state.graph);
+
+      showToast(
+        `Import complete: +${addedNodes} concepts, +${addedEdges} links` +
+        (rejectedCycles ? `, ${rejectedCycles} cycle rejection${rejectedCycles === 1 ? '' : 's'}` : '') +
+        '.'
+      );
+    }
+
     function renderCycle() {
       const el = document.getElementById('cycle');
       if (state.cycle && state.cycle.length) {
@@ -97,6 +171,75 @@
         el.classList.add('hidden');
         el.textContent = '';
       }
+    }
+
+    function selectedNodeId() {
+      return canvas.selected && canvas.selected.type === 'node'
+        ? canvas.selected.id
+        : null;
+    }
+
+    function nodeLabel(id) {
+      return state.graph.getNode(id)?.label || id;
+    }
+
+    function quickNoteDraft(id, inIds, outIds) {
+      const title = nodeLabel(id);
+      const prereqText = inIds.length ? inIds.map(nodeLabel).join(', ') : 'None';
+      const outText = outIds.length ? outIds.map(nodeLabel).join(', ') : 'None';
+      return (
+        `Topic: ${title}\n` +
+        `What it is:\n- \n\n` +
+        `Why it matters:\n- \n\n` +
+        `Prerequisites:\n- ${prereqText}\n\n` +
+        `Used for:\n- ${outText}`
+      );
+    }
+
+    function renderSubjectInfo() {
+      const selectedId = selectedNodeId();
+      const empty = document.getElementById('subject-empty');
+      const info = document.getElementById('subject-info');
+      const title = document.getElementById('subject-title');
+      const meta = document.getElementById('subject-meta');
+      const prereqs = document.getElementById('subject-prereqs');
+      const dependents = document.getElementById('subject-dependents');
+      const note = document.getElementById('subject-note');
+
+      if (!selectedId || !state.graph.hasNode(selectedId)) {
+        empty.classList.remove('hidden');
+        info.classList.add('hidden');
+        return;
+      }
+
+      const layer = state.layerOf.get(selectedId);
+      const inIds = [...state.graph.predecessors(selectedId)];
+      const outIds = [...state.graph.neighbors(selectedId)];
+      inIds.sort((a, b) => nodeLabel(a).localeCompare(nodeLabel(b)));
+      outIds.sort((a, b) => nodeLabel(a).localeCompare(nodeLabel(b)));
+
+      empty.classList.add('hidden');
+      info.classList.remove('hidden');
+      title.textContent = nodeLabel(selectedId);
+      meta.textContent =
+        `Layer: ${Number.isFinite(layer) ? 'L' + layer : 'Cycle'}  |  ` +
+        `Prerequisites: ${inIds.length}  |  Unlocks: ${outIds.length}`;
+      prereqs.textContent =
+        'Needs: ' + (inIds.length ? inIds.map(nodeLabel).join(', ') : 'None');
+      dependents.textContent =
+        'Helps with: ' + (outIds.length ? outIds.map(nodeLabel).join(', ') : 'None');
+      const saved = state.graph.getNode(selectedId)?.meta?.note || '';
+      note.value = saved || quickNoteDraft(selectedId, inIds, outIds);
+    }
+
+    function renderSelectedNodeTitle() {
+      const selectedId = selectedNodeId();
+      const titleEl = document.getElementById('selected-node-title');
+      if (!selectedId || !state.graph.hasNode(selectedId)) {
+        titleEl.textContent = 'None';
+        return;
+      }
+      titleEl.textContent = nodeLabel(selectedId);
     }
 
     let toastTimer = null;
@@ -126,6 +269,74 @@
     document.getElementById('new-concept').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') document.getElementById('add-concept').click();
     });
+
+    document.getElementById('doc-file').addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        document.getElementById('doc-text').value = text;
+        analyzeText(text);
+        showToast(`Loaded ${file.name}.`);
+      } catch (_) {
+        setImportSummary('Could not read the selected file.', true);
+      }
+    });
+
+    document.getElementById('analyze-doc').addEventListener('click', () => {
+      analyzeText(getDocText());
+    });
+
+    document.getElementById('merge-doc').addEventListener('click', () => {
+      const parsed = analyzedDoc || analyzeText(getDocText());
+      applyImport(parsed, false);
+    });
+
+    document.getElementById('replace-doc').addEventListener('click', () => {
+      const parsed = analyzedDoc || analyzeText(getDocText());
+      if (!parsed) return;
+      if (!confirm('Replace the current graph with concepts extracted from this document?')) return;
+      applyImport(parsed, true);
+    });
+
+    document.getElementById('auto-layout').addEventListener('click', () => {
+      canvas.autoLayout();
+      showToast('Auto layout restored layer-based placement.');
+    });
+
+    document.getElementById('reset-view').addEventListener('click', () => {
+      canvas.resetView();
+      showToast('View reset.');
+    });
+
+    document.getElementById('save-note').addEventListener('click', () => {
+      const selectedId = selectedNodeId();
+      if (!selectedId || !state.graph.hasNode(selectedId)) {
+        showToast('Select a concept first.');
+        return;
+      }
+      const n = state.graph.getNode(selectedId);
+      n.meta = n.meta || {};
+      n.meta.note = (document.getElementById('subject-note').value || '').trim();
+      storage.save(state.graph);
+      renderSubjectInfo();
+      showToast('Quick note saved.');
+    });
+
+    document.getElementById('clear-note').addEventListener('click', () => {
+      const selectedId = selectedNodeId();
+      if (!selectedId || !state.graph.hasNode(selectedId)) {
+        showToast('Select a concept first.');
+        return;
+      }
+      const n = state.graph.getNode(selectedId);
+      if (n.meta && 'note' in n.meta) delete n.meta.note;
+      document.getElementById('subject-note').value = '';
+      storage.save(state.graph);
+      renderSubjectInfo();
+      showToast('Quick note cleared.');
+    });
+
     document.getElementById('reset-demo').addEventListener('click', () => {
       if (!confirm('Replace the current graph with the demo curriculum?')) return;
       state.graph = seedDemo();
