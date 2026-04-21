@@ -19,8 +19,8 @@ When you're stuck in a course, the real problem is usually not that one topic is
 
 | # | Commit | Focus |
 |---|--------|-------|
-| 1 | **Foundation** (this commit) | Graph data structure, Kahn's algorithm with BFS layering, cycle detection, browser-based test suite, minimal demo UI |
-| 2 | Interactive canvas + incremental updates | Visual layered graph, drag-to-add edges, partial BFS re-layering on edit, localStorage persistence |
+| 1 | **Foundation** ✓ | Graph data structure, Kahn's algorithm with BFS layering, cycle detection, browser-based test suite, minimal demo UI |
+| 2 | **Interactive canvas + incremental updates** ✓ | SVG canvas, drag-to-add edges, partial BFS re-layering on every edit (`O(V'+E')`), node/edge removal with descendant recomputation, cycle rejection showing the closing path, localStorage persistence |
 | 3 | Document ingestion + concept extraction | Paste notes / upload .txt / .md, offline concept extractor, auto-edge suggestion, mastery-path export, contradiction resolver |
 | 4 | Polish | Theming, keyboard shortcuts, empty states, export to Markdown study plan, packaged single-file build |
 
@@ -32,8 +32,11 @@ When you're stuck in a course, the real problem is usually not that one topic is
 | Layer assignment (same pass) | `O(V + E)` | `O(V)` |
 | Cycle detection | `O(V + E)` | `O(V)` |
 | Add node | `O(1)` amortized | `O(1)` |
-| Add edge | `O(1)` amortized | `O(1)` |
-| Incremental re-layer after edge add *(commit 2)* | `O(V' + E')` on affected subgraph | `O(V')` |
+| Add edge (structural) | `O(1)` amortized | `O(1)` |
+| Cycle pre-check on edge add | `O(V' + E')` reachable from `v` | `O(V')` |
+| Incremental re-layer on edge add | `O(V' + E')` on affected descendants only | `O(V')` |
+| Re-layer on edge / node removal | `O(\|D\| + E_D)` on descendant closure of `v` | `O(\|D\|)` |
+| Storage save / load | `O(V + E)` serialise / rehydrate | `O(V + E)` |
 
 ## Running it
 
@@ -51,14 +54,18 @@ To run the test suite, open `tests/test.html` in the same way — all tests exec
 
 ```
 ChainForge/
-├── index.html            # offline demo shell
+├── index.html            # offline interactive shell
 ├── src/
-│   ├── Graph.js          # adjacency-list DAG
+│   ├── Graph.js          # adjacency-list DAG with reverse-edge tracking
 │   ├── Kahn.js           # O(V+E) topological sort + BFS layering
+│   ├── State.js          # incremental layer maintenance & cycle-pre-check
+│   ├── Storage.js        # localStorage persistence (injectable driver)
+│   ├── Canvas.js         # SVG renderer + drag-to-edit interactions
 │   └── App.js            # demo wiring
 ├── tests/
 │   ├── test.html         # browser test runner
-│   └── tests.js          # assertions covering LC210 cases + layering + cycles
+│   └── tests.js          # 32 cases: LC210 + layering + cycles + incremental
+│                         #           + partiality proofs + storage
 ├── styles/
 │   └── main.css
 └── README.md

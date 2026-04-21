@@ -16,36 +16,49 @@
       </div>
     </div>
     <div class="actions">
-      <button id="run-healthy" class="btn primary">Run on demo curriculum</button>
-      <button id="run-cycle" class="btn">Inject contradiction</button>
+      <button id="reset-demo" class="btn">Demo curriculum</button>
+      <button id="clear-all" class="btn">Clear all</button>
     </div>
   </header>
 
   <section class="stats-bar" id="stats" aria-live="polite"></section>
-
   <div id="cycle" class="cycle-banner hidden"></div>
 
   <main class="grid">
-    <section class="card">
-      <h2>Mastery path (topological order)</h2>
-      <p class="muted">Study top-to-bottom. Every concept appears only after all its prerequisites.</p>
+    <aside class="card panel">
+      <h2>Add a concept</h2>
+      <div class="form-row">
+        <input id="new-concept" type="text" placeholder="e.g. Dynamic Programming" autocomplete="off" />
+        <button id="add-concept" class="btn primary">Add</button>
+      </div>
+      <p class="muted">
+        <b>Drag</b> the blue port on a node's right edge onto another node to
+        draw a prerequisite. <b>Double-click</b> empty canvas to create a new
+        concept. <b>Click</b> a node or edge, then press <code>Delete</code> to
+        remove it. Your graph auto-saves to this browser.
+      </p>
+      <h2>Mastery path</h2>
+      <p class="muted">Sorted layer-first — study top-to-bottom.</p>
       <ol id="order" class="order"></ol>
-    </section>
+    </aside>
 
-    <section class="card">
-      <h2>BFS layers</h2>
-      <p class="muted">Layer <code>L<sub>i</sub></code> holds every concept whose longest prerequisite chain has length <code>i</code>. You can study an entire layer in parallel.</p>
-      <div id="layers" class="layers"></div>
+    <section class="canvas-wrap">
+      <svg id="canvas" class="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
     </section>
   </main>
 
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
   <footer class="foot">
-    <span>Initial commit · offline · <code>O(V + E)</code> topological sort</span>
+    <span>commit 2 · offline · interactive · <code>O(V'+E')</code> partial BFS re-layering on every edit</span>
     <span>Tests: <a href="tests/test.html">tests/test.html</a></span>
   </footer>
 
   <script src="src/Graph.js"></script>
   <script src="src/Kahn.js"></script>
+  <script src="src/State.js"></script>
+  <script src="src/Storage.js"></script>
+  <script src="src/Canvas.js"></script>
   <script src="src/App.js"></script>
 </body>
 </html>
